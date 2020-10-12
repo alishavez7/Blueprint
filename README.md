@@ -1,0 +1,2 @@
+# Blueprint
+Azure blueprint templates
