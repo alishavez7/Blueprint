@@ -1,0 +1,76 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "subscriptionId": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "name": {
+            "type": "string",
+            "defaultValue": "webapp-wu2-relo-app01"
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "westus2"
+        },
+        "hostingPlanName": {
+            "type": "string",
+            "defaultValue": "webapp-wu2-relo-app01-plan"
+        },
+        "serverFarmResourceGroup": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "sku": {
+            "type": "string",
+            "defaultValue": "S1"
+        },
+        "skuCode": {
+            "type": "string",
+            "defaultValue": "Standard"
+        },
+        "currentStack": {
+            "type": "string"
+        }
+    },
+    "resources": [
+        {
+            "apiVersion": "2018-11-01",
+            "name": "[parameters('name')]",
+            "type": "Microsoft.Web/sites",
+            "location": "[parameters('location')]",
+            "tags": {},
+            "dependsOn": [
+                "[concat('Microsoft.Web/serverfarms/', parameters('hostingPlanName'))]"
+            ],
+            "properties": {
+                "name": "[parameters('name')]",
+                "siteConfig": {
+                    "appSettings": [],
+                    "metadata": [
+                        {
+                            "name": "CURRENT_STACK",
+                            "value": "[parameters('currentStack')]"
+                        }
+                    ]
+                },
+                "serverFarmId": "[concat('/subscriptions/', parameters('subscriptionId'),'/resourcegroups/', parameters('serverFarmResourceGroup'), '/providers/Microsoft.Web/serverfarms/', parameters('hostingPlanName'))]",
+                "clientAffinityEnabled": true
+            }
+        },
+        {
+            "apiVersion": "2018-11-01",
+            "name": "[parameters('hostingPlanName')]",
+            "type": "Microsoft.Web/serverfarms",
+            "location": "[parameters('location')]",
+            "kind": "App",
+            "tags": {},
+            "dependsOn": [],
+            "sku": {
+                "Tier": "[parameters('sku')]",
+                "Name": "[parameters('skuCode')]"
+            }
+        }
+    ]
+}

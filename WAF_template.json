@@ -1,0 +1,214 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "appGatewayName": {
+      "type": "String",
+      "defaultValue": "waf-wu2-relo-qa-dmz"
+    },
+    "skuName": {
+      "type": "string",
+      "defaultValue": "WAF_v2"
+    },
+    "skuCapacity": {
+        "type": "int",
+        "defaultValue": 2
+    },
+    "publicIpAddressName": {
+        "type": "string",
+        "defaultValue": "pip-wu2-relo-qa-waf"
+    },
+    "vnetName": {
+        "type": "string",
+        "defaultValue": "vnet-wu2-relo-qa-001"
+    },
+    "subnetname": {
+        "type": "string",
+        "defaultValue": "snet-wu2-relo-qa-waf"
+    },
+    "location": {
+      "defaultValue": "westus2",
+      "type": "String"
+    },
+    "ResourceGroup": {
+      "defaultValue": "rg-wu2-relo-qa",
+      "type": "String"
+    }    
+  },
+  "variables": {
+    "AGWafPol01": "WafPol01",
+    "subnetID": "[concat(subscription().id,'/resourceGroups/',parameters('ResourceGroup'),'/providers/Microsoft.Network/virtualNetworks/', parameters('vnetName'),'/subnets/', parameters('subnetName'))]"
+  },
+  "resources": [
+    {
+        "apiVersion": "2019-02-01",
+        "type": "Microsoft.Network/publicIpAddresses",
+        "name": "[parameters('publicIpAddressName')]",
+        "location": "[parameters('location')]",
+        "sku": {
+            "name": "Standard"
+        },
+        "properties": {
+            "publicIPAllocationMethod": "Static"
+        },
+        "tags": {}
+    },
+    {
+      "type": "Microsoft.Network/applicationGateways",
+      "apiVersion": "2020-06-01",
+      "name": "[parameters('appGatewayName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId(parameters('ResourceGroup'), 'Microsoft.Network/publicIpAddresses', parameters('publicIpAddressName'))]",
+        "[resourceId('Microsoft.Network/ApplicationGatewayWebApplicationFirewallPolicies', variables('AGWafPol01'))]"
+      ],
+      "properties": {
+        "sku": {
+          "name": "[parameters('skuName')]",
+          "tier": "[parameters('skuName')]",
+          "capacity": "[parameters('skuCapacity')]"
+        },
+        "gatewayIPConfigurations": [
+          {
+            "name": "appGatewayIpConfig",
+            "properties": {
+              "subnet": {
+                "id": "[variables('subnetID')]"
+              }
+            }
+          }
+        ],
+        "frontendIPConfigurations": [
+          {
+            "name": "appGwPublicFrontendIp",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId(parameters('ResourceGroup'), 'Microsoft.Network/publicIPAddresses', parameters('publicIpAddressName'))]"
+              }
+            }
+          }
+        ],
+        "frontendPorts": [
+          {
+            "name": "port_80",
+            "properties": {
+              "port": 80
+            }
+          }
+        ],
+        "backendAddressPools": [
+          {
+            "name": "myBackendPool",
+            "properties": {}
+          }
+        ],
+        "backendHttpSettingsCollection": [
+          {
+            "name": "myHTTPSetting",
+            "properties": {
+              "port": 80,
+              "protocol": "Http",
+              "cookieBasedAffinity": "Disabled",
+              "pickHostNameFromBackendAddress": false,
+              "requestTimeout": 20
+            }
+          }
+        ],
+        "httpListeners": [
+          {
+            "name": "myListener",
+            "properties": {
+              "firewallPolicy": {
+                "id": "[resourceId('Microsoft.Network/ApplicationGatewayWebApplicationFirewallPolicies', variables('AGWafPol01'))]"
+              },
+              "frontendIPConfiguration": {
+                "id": "[resourceId('Microsoft.Network/applicationGateways/frontendIPConfigurations', parameters('appGatewayName'), 'appGwPublicFrontendIp')]"
+              },
+              "frontendPort": {
+                "id": "[resourceId('Microsoft.Network/applicationGateways/frontendPorts', parameters('appGatewayName'), 'port_80')]"
+              },
+              "protocol": "Http",
+              "requireServerNameIndication": false
+            }
+          }
+        ],
+        "requestRoutingRules": [
+          {
+            "name": "myRoutingRule",
+            "properties": {
+              "ruleType": "Basic",
+              "httpListener": {
+                "id": "[resourceId('Microsoft.Network/applicationGateways/httpListeners', parameters('appGatewayName'), 'myListener')]"
+              },
+              "backendAddressPool": {
+                "id": "[resourceId('Microsoft.Network/applicationGateways/backendAddressPools', parameters('appGatewayName'), 'myBackendPool')]"
+              },
+              "backendHttpSettings": {
+                "id": "[resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection', parameters('appGatewayName'), 'myHTTPSetting')]"
+              }
+            }
+          }
+        ],
+        "enableHttp2": false,
+        "webApplicationFirewallConfiguration": {
+          "enabled": true,
+          "firewallMode": "Prevention",
+          "ruleSetType": "OWASP",
+          "ruleSetVersion": "3.1",
+          "requestBodyCheck": true,
+          "maxRequestBodySizeInKb": 128,
+          "fileUploadLimitInMb": 100
+        },
+        "firewallPolicy": {
+          "id": "[resourceId('Microsoft.Network/ApplicationGatewayWebApplicationFirewallPolicies', variables('AGWafPol01'))]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Network/ApplicationGatewayWebApplicationFirewallPolicies",
+      "apiVersion": "2020-06-01",
+      "name": "[variables('AGWafPol01')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "customRules": [
+          {
+            "name": "CustRule01",
+            "priority": 100,
+            "ruleType": "MatchRule",
+            "action": "Block",
+            "matchConditions": [
+              {
+                "matchVariables": [
+                  {
+                    "variableName": "RemoteAddr"
+                  }
+                ],
+                "operator": "IPMatch",
+                "negationConditon": true,
+                "matchValues": [
+                  "10.10.10.0/24"
+                ]
+              }
+            ]
+          }
+        ],
+        "policySettings": {
+          "requestBodyCheck": true,
+          "maxRequestBodySizeInKb": 128,
+          "fileUploadLimitInMb": 100,
+          "state": "Enabled",
+          "mode": "Prevention"
+        },
+        "managedRules": {
+          "managedRuleSets": [
+            {
+              "ruleSetType": "OWASP",
+              "ruleSetVersion": "3.1"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,230 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.1",
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "westus2",
+      "metadata": {
+        "description": "enter resource location."
+      }
+    },
+    "virtualNetworkName": {
+      "type": "string",
+      "defaultValue": "vnet-wu2-relo-dev-001",
+      "metadata": {
+        "description": "Enter vnet name."
+      }
+    },
+    "addressPrefix": {
+      "type": "string",
+      "defaultValue": "10.213.0.0/16",
+      "metadata": {
+        "description": "Enter vnet address prefix."
+      }
+    },
+    "subnetNameDB": {
+      "type": "string",
+      "defaultValue": "snet-wu2-relo-db",
+      "metadata": {
+        "description": "Enter subnet name."
+      }
+    },
+    "subnetPrefixDB": {
+      "type": "string",
+      "defaultValue": "10.213.0.0/24",
+      "metadata": {
+        "description": "Enter subnet address prefix."
+      }
+    },
+    "subnetNameAPP": {
+      "type": "string",
+      "defaultValue": "snet-wu2-relo-app",
+      "metadata": {
+        "description": "Enter subnet name."
+      }
+    },
+    "subnetPrefixAPP": {
+      "type": "string",
+      "defaultValue": "10.213.1.0/24",
+      "metadata": {
+        "description": "Enter subnet address prefix."
+      }
+    },
+    "subnetNameWVD": {
+      "type": "string",
+      "defaultValue": "snet-wu2-relo-wvd",
+      "metadata": {
+        "description": "Enter subnet name."
+      }
+    },
+    "subnetPrefixWVD": {
+      "type": "string",
+      "defaultValue": "10.213.3.0/24",
+      "metadata": {
+        "description": "Enter subnet address prefix."
+      }
+    },    
+    "nsgNameDB": {
+        "type": "string",
+        "defaultValue": "nsg-wu2-relo-dev-db",
+        "metadata": {
+            "description": "Enter NSG name"
+        }
+  },
+    "nsgNameAPP": {
+        "type": "string",
+        "defaultValue": "nsg-wu2-relo-dev-app",
+        "metadata": {
+            "description": "Enter NSG name"
+        }
+  },
+    "nsgNameWVD": {
+        "type": "string",
+        "defaultValue": "nsg-wu2-relo-dev-wvd",
+        "metadata": {
+            "description": "Enter NSG name"
+        }
+  },      
+  "routetableName": {
+      "type": "string",
+      "defaultValue": "rt-wu2-relo-dev-db",
+      "metadata": {
+          "description": "Enter route table name"
+      }
+    }
+  },
+  "variables": {},
+  "resources": [
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2020-06-01",
+      "name": "[parameters('nsgNameDB')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "allow_tds_inbound",
+            "properties": {
+              "description": "Allow access to data",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "1433",
+              "sourceAddressPrefix": "VirtualNetwork",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 1000,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "allow_redirect_inbound",
+            "properties": {
+              "description": "Allow inbound redirect traffic to Managed Instance inside the virtual network",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "11000-11999",
+              "sourceAddressPrefix": "VirtualNetwork",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 1100,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2020-06-01",
+      "name": "[parameters('nsgNameAPP')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "securityRules": []
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2020-06-01",
+      "name": "[parameters('nsgNameWVD')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "securityRules": []
+      }
+    },          
+    {
+      "type": "Microsoft.Network/routeTables",
+      "apiVersion": "2020-06-01",
+      "name": "[parameters('routetableName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "disableBgpRoutePropagation": false
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2020-06-01",
+      "name": "[parameters('virtualNetworkName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[parameters('routetableName')]",
+        "[parameters('nsgNameDB')]",
+        "[parameters('nsgNameAPP')]",
+        "[parameters('nsgNameWVD')]"
+      ],
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[parameters('addressPrefix')]"
+          ]
+        },
+        "dhcpOptions": {
+           "dnsServers": [
+                "10.1.1.1",
+                "10.10.1.1"
+                ]
+          },        
+        "subnets": [
+          {
+            "name": "[parameters('subnetNameDB')]",
+            "properties": {
+              "addressPrefix": "[parameters('subnetPrefixDB')]",
+              "routeTable": {
+                "id": "[resourceId('Microsoft.Network/routeTables', parameters('routetableName'))]"
+              },
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('nsgNameDB'))]"
+              },
+              "delegations": [
+                {
+                  "name": "miDelegation",
+                  "properties": {
+                    "serviceName": "Microsoft.Sql/managedInstances"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "[parameters('subnetNameAPP')]",
+            "properties": {
+              "addressPrefix": "[parameters('subnetPrefixAPP')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('nsgNameAPP'))]"
+              }
+            }
+          },
+          {
+            "name": "[parameters('subnetNameWVD')]",
+            "properties": {
+              "addressPrefix": "[parameters('subnetPrefixWVD')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('nsgNameAPP'))]"
+              }
+            }
+          }                     
+        ]
+      }
+    }
+  ]
+}

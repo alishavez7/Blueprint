@@ -1,0 +1,136 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": { 
+        "vmName": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "VM name"
+            }
+        },
+        "vmUserName": {
+            "type": "string",
+            "metadata": {
+                "description": "Username for the Virtual Machine"
+            },
+            "defaultValue": "pashadmin"
+        },
+        "vmPassword": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Password for the Virtual Machine"
+            },
+            "defaultValue": "Pashaadmin@123"
+        },
+        "vmSize": {
+            "type": "string",
+            "defaultValue":"Standard_DS2_v2",
+            "metadata": {
+                "description": "Size of VM to deploy"
+            }
+        },
+      "virtualNetworkResourceGroup":{
+        "type":"string",
+        "defaultValue": "rg-wu2-relo-dev",
+        "metadata": {
+          "description": "Virtual network resource group name"
+        }
+      },
+      "virtualNetworkName": {
+        "type": "String",
+        "defaultValue": "vnet-wu2-relo-dev-001",
+        "allowedValues": [],
+        "metadata": {
+            "description": "Name of the virtual network"
+        }
+      },  
+      "subnetName": {
+        "type": "string",
+        "defaultvalue": "",
+        "allowedValues": [],
+        "metadata": {
+          "description": "Name of the existing subnet"
+        }
+      },
+      "vmimageSKU": {
+          "type": "string",
+          "defaultValue": "2019-Datacenter",
+          "metadata": {
+              "description": "vm image sku"
+          }
+      }                  
+    },
+    "variables": {
+        "subnetRef": "[concat(subscription().id,'/resourceGroups/',parameters('virtualNetworkResourceGroup'),'/providers/Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'),'/subnets/', parameters('subnetName'))]",
+        "nicName": "[concat(parameters('vmName'), '-nic')]"              
+    },
+    "resources": [
+        {
+            "apiVersion": "2019-06-01",
+            "type": "Microsoft.Network/networkInterfaces",
+            "name": "[concat(parameters('vmName'),'-nic')]",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "enableAcceleratedNetworking": false,
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "subnet": {
+                                "id": "[variables('subnetRef')]"
+                            },
+                            "primary":true
+                        }
+                    }                   
+                ]
+            }
+        },     
+        {
+            "apiVersion": "2017-12-01",
+            "type": "Microsoft.Compute/virtualMachines",
+            "name": "[parameters('vmName')]",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName'))]"
+            ],
+            "properties": {                                            
+                "hardwareProfile": {
+                    "vmSize": "[parameters('vmSize')]"
+                },
+                "osProfile": {
+                    "computerName": "[parameters('vmName')]",
+                    "adminUsername": "[parameters('vmUserName')]",
+                    "adminPassword": "[parameters('vmPassword')]"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "MicrosoftWindowsServer",
+                        "offer": "WindowsServer",
+                        "sku": "[parameters('vmimageSKU')]",
+                        "version": "latest"
+                      },
+                    "osDisk": {
+                        "osType": "Windows",
+                        "name": "[concat(parameters('vmName'), '-osdisk')]",
+                        "createOption": "FromImage",
+                        "caching":"ReadWrite",
+                        "managedDisk": {
+                            "storageAccountType":"Premium_LRS"
+                        }
+                    },
+                    "dataDisks": []
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName'))]"
+                        }
+                    ]
+                }
+            }
+        }
+    ],
+    "outputs": {}
+}

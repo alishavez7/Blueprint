@@ -1,0 +1,44 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "storageAccountName": {
+            "type": "string",
+            "defaultValue": "storewu2reloapp",
+            "metadata": {
+                "description": "Specifies the name of the Azure Storage account."
+            }
+        },
+        "storageSKUname": {
+            "type": "string",
+            "defaultValue": "Standard_LRS"
+        },
+        "storageSKUTier": {
+            "type": "string",
+            "defaultValue": "Standard"
+        },        
+        "location": {
+            "type": "string",
+            "defaultValue": "westus2",
+            "metadata": {
+                "description": "storage account location"
+            }
+        }
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Storage/storageAccounts",
+            "apiVersion": "2019-06-01",
+            "name": "[parameters('storageAccountName')]",
+            "location": "[parameters('location')]",
+            "kind": "StorageV2",
+            "sku": {
+                "name": "[parameters('storageSKUname')]",
+                "tier": "[parameters('storageSKUTier')]"
+            },
+            "properties": {
+                "accessTier": "Hot"
+            }
+        }
+    ]
+}

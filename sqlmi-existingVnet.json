@@ -1,0 +1,125 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.1",
+  "parameters": {
+    "managedInstanceName": {
+      "type": "string",
+      "defaultValue": "sqlmi-wu2-ghc-01",
+      "metadata": {
+        "description": "Enter managed instance name."
+      }
+    },
+    "administratorLogin": {
+      "type": "string",
+      "defaultValue": "sqlAdminOtr2Branch",
+      "metadata": {
+        "description": "Enter user name."
+      }
+    },
+    "administratorLoginPassword": {
+      "type": "securestring",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Enter password."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "westus2",
+      "metadata": {
+        "description": "Enter location. If you leave this field blank resource group location would be used."
+      }
+    },
+    "skuName": {
+      "type": "string",
+      "defaultValue": "GP_Gen5",
+      "allowedValues": [
+        "GP_Gen5",
+        "BC_Gen5"
+      ],
+      "metadata": {
+        "description": "Enter sku name."
+      }
+    },
+    "vCores": {
+      "type": "int",
+      "defaultValue": 4,
+      "allowedValues": [
+        4,
+        8,
+        16,
+        24,
+        32,
+        40,
+        64,
+        80
+      ],
+      "metadata": {
+        "description": "Enter number of vCores."
+      }
+    },
+    "storageSizeInGB": {
+      "type": "int",
+      "defaultValue": 1024,
+      "minValue": 32,
+      "maxValue": 8192,
+      "metadata": {
+        "description": "Enter storage size."
+      }
+    },
+    "licenseType": {
+      "type": "string",
+      "defaultValue": "BasePrice",
+      "allowedValues": [
+        "BasePrice",
+        "LicenseIncluded"
+      ],
+      "metadata": {
+        "description": "Enter license type."
+      }
+    },
+    "virtualNetworkName": {
+      "type": "string",
+      "defaultValue": "vnet-wu2-relo-dev-001",
+      "metadata": {
+        "description": "Enter vnet name."
+      }
+    },
+    "subnetNameDB": {
+      "type": "string",
+      "defaultValue": "snet-wu2-relo-db",
+      "metadata": {
+        "description": "Enter subnet name."
+      }
+    }
+  },
+  "variables": {},
+  "resources": [
+    {
+      "type": "Microsoft.Sql/managedInstances",
+      "apiVersion": "2020-02-02-preview",
+      "name": "[parameters('managedInstanceName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "[parameters('skuName')]"
+      },
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "dependsOn": [],
+      "properties": {
+        "administratorLogin": "[parameters('administratorLogin')]",
+        "administratorLoginPassword": "[parameters('administratorLoginPassword')]",
+        "subnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetNameDB'))]",
+        "storageSizeInGB": "[parameters('storageSizeInGB')]",
+        "vCores": "[parameters('vCores')]",
+        "licenseType": "[parameters('licenseType')]",
+        "collation": "SQL_Latin1_General_CP1_CI_AS",
+        "publicDataEndpointEnabled": false,
+        "proxyOverride": "Redirect",
+        "timezoneId": "Pacific Standard Time",
+        "storageAccountType": "GRS"        
+      }
+    }
+  ]
+}

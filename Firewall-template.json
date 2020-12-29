@@ -1,0 +1,73 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "type": "string",
+            "defaultValue": "westus2"
+        },
+        "resourceGroup": {
+            "type": "string",
+            "defaultValue": "rg-wu2-relo-dev"
+        },
+        "azureFirewallName": {
+            "type": "string",
+            "defaultValue": "fw-wu2-relo-dmz"
+        },
+        "vnetName": {
+            "type": "string",
+            "defaultValue": "vnet-wu2-relo-dev-001"
+        },
+        "subnetName": {
+            "type": "string",
+            "defaultValue": "AzureFirewallSubnet"
+        },
+        "publicIpAddressName": {
+            "type": "string",
+            "defaultValue": "pip-wu2-relo-fw"
+        }
+    },
+    "variables": {
+        "subnetRef": "[concat(subscription().id,'/resourceGroups/',parameters('resourceGroup'),'/providers/Microsoft.Network/virtualNetworks/', parameters('vnetName'),'/subnets/', parameters('subnetName'))]"
+    },
+    "resources": [
+        {
+            "apiVersion": "2019-02-01",
+            "type": "Microsoft.Network/publicIpAddresses",
+            "name": "[parameters('publicIpAddressName')]",
+            "location": "[parameters('location')]",
+            "sku": {
+                "name": "Standard"
+            },
+            "properties": {
+                "publicIPAllocationMethod": "Static"
+            },
+            "tags": {}
+        },
+        {
+            "apiVersion": "2020-05-01",
+            "type": "Microsoft.Network/azureFirewalls",
+            "name": "[parameters('azureFirewallName')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId(parameters('resourceGroup'), 'Microsoft.Network/publicIpAddresses', parameters('publicIpAddressName'))]"
+            ],
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "[parameters('publicIpAddressName')]",
+                        "properties": {
+                            "subnet": {
+                                "id": "[variables('subnetRef')]"
+                            },
+                            "publicIPAddress": {
+                                "id": "[resourceId(parameters('resourceGroup'), 'Microsoft.Network/publicIPAddresses', parameters('publicIpAddressName'))]"
+                            }
+                        }
+                    }
+                ]
+            },
+            "tags": {}
+        }
+    ]
+}

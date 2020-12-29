@@ -1,0 +1,508 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.1",
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "westus2",
+      "metadata": {
+        "description": "enter resource location."
+      }
+    },
+    "virtualNetworkName": {
+      "type": "string",
+      "defaultValue": "vnet-wu2-relo-qa-001",
+      "metadata": {
+        "description": "Enter vnet name."
+      }
+    },
+    "addressPrefix": {
+      "type": "string",
+      "defaultValue": "10.214.0.0/16",
+      "metadata": {
+        "description": "Enter vnet address prefix."
+      }
+    },
+    "subnetNameDB": {
+      "type": "string",
+      "defaultValue": "snet-wu2-relo-qa-db",
+      "metadata": {
+        "description": "Enter subnet name."
+      }
+    },
+    "subnetPrefixDB": {
+      "type": "string",
+      "defaultValue": "10.214.0.0/24",
+      "metadata": {
+        "description": "Enter subnet address prefix."
+      }
+    },    
+    "subnetNameAPP": {
+      "type": "string",
+      "defaultValue": "snet-wu2-relo-qa-app",
+      "metadata": {
+        "description": "Enter subnet name."
+      }
+    },
+    "subnetPrefixAPP": {
+      "type": "string",
+      "defaultValue": "10.214.1.0/24",
+      "metadata": {
+        "description": "Enter subnet address prefix."
+      }
+    },
+    "subnetNameWVD": {
+      "type": "string",
+      "defaultValue": "snet-wu2-relo-qa-wvd",
+      "metadata": {
+        "description": "Enter subnet name."
+      }
+    },
+    "subnetPrefixWVD": {
+      "type": "string",
+      "defaultValue": "10.214.3.0/24",
+      "metadata": {
+        "description": "Enter subnet address prefix."
+      }
+    },
+    "subnetNameFirewall": {
+      "type": "string",
+      "defaultValue": "AzureFirewallSubnet",
+      "metadata": {
+        "description": "Enter subnet name."
+      }
+    },
+    "subnetPrefixFirewall": {
+      "type": "string",
+      "defaultValue": "10.214.2.0/26",
+      "metadata": {
+        "description": "Enter subnet address prefix."
+      }
+    },        
+    "subnetNameWaf": {
+        "type": "string",
+        "defaultValue": "snet-wu2-relo-qa-waf",
+        "metadata": {
+            "description": "WAF subnet name"
+        }
+  },
+    "subnetPrefixWaf": {
+        "type": "string",
+        "defaultValue": "10.214.4.0/24",
+        "metadata": {
+            "description": "WAF subnet prefix"
+        }
+  }, 
+    "subnetNamePublic1": {
+        "type": "string",
+        "defaultValue": "snet-wu2-relo-qa-vm01",
+        "metadata": {
+            "description": "Public subnet name"
+        }
+  },
+    "subnetPrefixPublic1": {
+        "type": "string",
+        "defaultValue": "10.214.5.0/24",
+        "metadata": {
+            "description": "Public subnet prefix"
+        }
+  },
+    "subnetNamePublic2": {
+        "type": "string",
+        "defaultValue": "snet-wu2-relo-qa-vm02",
+        "metadata": {
+            "description": "Public subnet name"
+        }
+  },
+    "subnetPrefixPublic2": {
+        "type": "string",
+        "defaultValue": "10.214.6.0/24",
+        "metadata": {
+            "description": "Public subnet prefix"
+        }
+  },  
+    "subnetNamePublic3": {
+        "type": "string",
+        "defaultValue": "snet-wu2-relo-qa-vm03",
+        "metadata": {
+            "description": "Private subnet name"
+        }
+  },
+    "subnetPrefixPublic3": {
+        "type": "string",
+        "defaultValue": "10.214.7.0/24",
+        "metadata": {
+            "description": "Private subnet prefix"
+        }
+  },
+    "subnetNamePublic4": {
+        "type": "string",
+        "defaultValue": "snet-wu2-relo-qa-vm04",
+        "metadata": {
+            "description": "Private subnet name"
+        }
+  },
+    "subnetPrefixPublic4": {
+        "type": "string",
+        "defaultValue": "10.214.8.0/24",
+        "metadata": {
+            "description": "Private subnet prefix"
+        }
+  },
+    "subnetNamePrivate1": {
+        "type": "string",
+        "defaultValue": "snet-wu2-relo-qa-private01",
+        "metadata": {
+            "description": "Private subnet name"
+        }
+  },
+    "subnetPrefixPrivate1": {
+        "type": "string",
+        "defaultValue": "10.214.9.0/24",
+        "metadata": {
+            "description": "Private subnet prefix"
+        }
+  },
+    "subnetNamePrivate2": {
+        "type": "string",
+        "defaultValue": "snet-wu2-relo-qa-private02",
+        "metadata": {
+            "description": "Private subnet name"
+        }
+  },
+    "subnetPrefixPrivate2": {
+        "type": "string",
+        "defaultValue": "10.214.10.0/24",
+        "metadata": {
+            "description": "Private subnet prefix"
+        }
+  },
+    "nsgNameDB": {
+        "type": "string",
+        "defaultValue": "nsg-wu2-relo-qa-db",
+        "metadata": {
+            "description": "Enter NSG name"
+        }
+  },
+  "routetableName": {
+      "type": "string",
+      "defaultValue": "rt-wu2-relo-qa-db",
+      "metadata": {
+          "description": "Enter route table name"
+      }
+    },                     
+    "nsgNameAPP": {
+        "type": "string",
+        "defaultValue": "nsg-wu2-relo-qa-app",
+        "metadata": {
+            "description": "Enter NSG name"
+        }
+  },
+    "nsgNameWVD": {
+        "type": "string",
+        "defaultValue": "nsg-wu2-relo-qa-wvd",
+        "metadata": {
+            "description": "Enter NSG name"
+        }
+  },
+    "nsgNamePublic1": {
+        "type": "string",
+        "defaultValue": "nsg-wu2-relo-qa-vm01",
+        "metadata": {
+            "description": "Enter NSG name"
+        }
+  },
+    "nsgNamePublic2": {
+        "type": "string",
+        "defaultValue": "nsg-wu2-relo-qa-vm02",
+        "metadata": {
+            "description": "Enter NSG name"
+        }
+  },  
+    "nsgNamePublic3": {
+        "type": "string",
+        "defaultValue": "nsg-wu2-relo-qa-vm03",
+        "metadata": {
+            "description": "Enter NSG name"
+        }
+  },
+    "nsgNamePublic4": {
+        "type": "string",
+        "defaultValue": "nsg-wu2-relo-qa-vm04",
+        "metadata": {
+            "description": "Enter NSG name"
+        }
+  },
+    "nsgNamePrivate1": {
+        "type": "string",
+        "defaultValue": "nsg-wu2-relo-qa-private01",
+        "metadata": {
+            "description": "Enter NSG name"
+        }
+  },
+    "nsgNamePrivate2": {
+        "type": "string",
+        "defaultValue": "nsg-wu2-relo-qa-private02",
+        "metadata": {
+            "description": "Enter NSG name"
+        }
+  }          
+  },
+  "variables": {},
+  "resources": [
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2020-06-01",
+      "name": "[parameters('nsgNameDB')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "allow_tds_inbound",
+            "properties": {
+              "description": "Allow access to data",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "1433",
+              "sourceAddressPrefix": "VirtualNetwork",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 1000,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "allow_redirect_inbound",
+            "properties": {
+              "description": "Allow inbound redirect traffic to Managed Instance inside the virtual network",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "11000-11999",
+              "sourceAddressPrefix": "VirtualNetwork",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 1100,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2020-06-01",
+      "name": "[parameters('nsgNameAPP')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "securityRules": []
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2020-06-01",
+      "name": "[parameters('nsgNameWVD')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "securityRules": []
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2020-06-01",
+      "name": "[parameters('nsgNamePublic1')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "securityRules": []
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2020-06-01",
+      "name": "[parameters('nsgNamePublic2')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "securityRules": []
+      }
+    },    
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2020-06-01",
+      "name": "[parameters('nsgNamePublic3')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "securityRules": []
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2020-06-01",
+      "name": "[parameters('nsgNamePublic4')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "securityRules": []
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2020-06-01",
+      "name": "[parameters('nsgNamePrivate1')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "securityRules": []
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2020-06-01",
+      "name": "[parameters('nsgNamePrivate2')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "securityRules": []
+      }
+    },    
+    {
+      "type": "Microsoft.Network/routeTables",
+      "apiVersion": "2020-06-01",
+      "name": "[parameters('routetableName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "disableBgpRoutePropagation": false
+      }
+    },                                      
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2020-06-01",
+      "name": "[parameters('virtualNetworkName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[parameters('nsgNameAPP')]",
+        "[parameters('nsgNameWVD')]",
+        "[parameters('nsgNamePrivate1')]",
+        "[parameters('nsgNamePrivate2')]",
+        "[parameters('nsgNamePublic3')]",
+        "[parameters('nsgNamePublic4')]",
+        "[parameters('nsgNamePublic1')]",
+        "[parameters('nsgNamePublic2')]"
+      ],
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[parameters('addressPrefix')]"
+          ]
+        },
+        "dhcpOptions": {
+           "dnsServers": [
+                "10.1.1.1",
+                "10.10.1.1"
+                ]
+          },        
+        "subnets": [
+          {
+            "name": "[parameters('subnetNameDB')]",
+            "properties": {
+              "addressPrefix": "[parameters('subnetPrefixDB')]",
+              "routeTable": {
+                "id": "[resourceId('Microsoft.Network/routeTables', parameters('routetableName'))]"
+              },
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('nsgNameDB'))]"
+              },
+              "delegations": [
+                {
+                  "name": "miDelegation",
+                  "properties": {
+                    "serviceName": "Microsoft.Sql/managedInstances"
+                  }
+                }
+              ]
+            }
+          },          
+          {
+            "name": "[parameters('subnetNameAPP')]",
+            "properties": {
+              "addressPrefix": "[parameters('subnetPrefixAPP')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('nsgNameAPP'))]"
+              }
+            }
+          },
+          {
+            "name": "[parameters('subnetNameWVD')]",
+            "properties": {
+              "addressPrefix": "[parameters('subnetPrefixWVD')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('nsgNameWVD'))]"
+              }
+            }
+          },
+          {
+            "name": "[parameters('subnetNameFirewall')]",
+            "properties": {
+              "addressPrefix": "[parameters('subnetPrefixFirewall')]"
+            }
+          },
+          {
+            "name": "[parameters('subnetNameWaf')]",
+            "properties": {
+              "addressPrefix": "[parameters('subnetPrefixWaf')]"
+            }
+          },
+          {
+            "name": "[parameters('subnetNamePublic1')]",
+            "properties": {
+              "addressPrefix": "[parameters('subnetPrefixPublic1')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('nsgNamePublic1'))]"
+              }
+            }
+          },
+          {
+            "name": "[parameters('subnetNamePublic2')]",
+            "properties": {
+              "addressPrefix": "[parameters('subnetPrefixPublic2')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('nsgNamePublic2'))]"
+              }
+            }
+          },          
+          {
+            "name": "[parameters('subnetNamePublic3')]",
+            "properties": {
+              "addressPrefix": "[parameters('subnetPrefixPublic3')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('nsgNamePublic3'))]"
+              }
+            }
+          },
+          {
+            "name": "[parameters('subnetNamePublic4')]",
+            "properties": {
+              "addressPrefix": "[parameters('subnetPrefixPublic4')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('nsgNamePublic4'))]"
+              }
+            }
+          },
+                    {
+            "name": "[parameters('subnetNamePrivate1')]",
+            "properties": {
+              "addressPrefix": "[parameters('subnetPrefixPrivate1')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('nsgNamePrivate1'))]"
+              }
+            }
+          },
+                    {
+            "name": "[parameters('subnetNamePrivate2')]",
+            "properties": {
+              "addressPrefix": "[parameters('subnetPrefixPrivate2')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('nsgNamePrivate2'))]"
+              }              
+            }
+          }                                                                         
+        ]
+      }
+    }
+  ]
+}

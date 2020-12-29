@@ -1,0 +1,161 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "virtualMachineAdminUserName": {
+      "defaultValue": "pashadmin",
+      "type": "string",
+      "metadata": {
+        "description": "Administrator Username for the local admin account"
+      }
+    },
+    "virtualMachineAdminPassword": {
+      "type": "securestring",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Administrator password for the local admin account"
+      }
+    },
+    "virtualMachineNamePrefix": {
+      "defaultValue": "vm-wu2-relo-0",
+      "type": "string",
+      "maxLength": 15,
+      "metadata": {
+        "description": "VM name prefix"
+      }
+    },
+    "virtualMachineCount": {
+      "type": "int",
+      "defaultValue": 2,
+      "metadata": {
+        "description": "Number of  virtual machines to be created"
+      }
+    },
+    "virtualMachineSize": {
+      "type": "string",
+      "defaultValue": "Standard_DS2_v2",
+      "allowedValues": [
+      ],
+      "metadata": {
+        "description": "Virtual Machine Size"
+      }
+    },
+    "vmimageSKU": {
+      "type": "string",
+      "defaultValue": "2019-Datacenter",
+      "metadata": {
+        "description": "VM image sku"
+      },
+      "allowedValues": [
+      ]
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "westus2",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
+    "vnetName": {
+      "type": "string",
+      "defaultValue": "vnet-wu2-relo-dev-001",
+      "metadata": {
+        "description": "Existing Virtual network name"
+      }
+    },
+    "subnetName": {
+      "type": "string",
+      "defaultValue": "snet-wu2-relo-app",
+      "metadata": {
+        "description": "Existing subnet name"
+      }
+    },
+    "VnetRgName": {
+      "type": "string",
+      "defaultValue": "rg-wu2-relo-dev",
+      "metadata": {
+        "description": "Vnet resource group name"
+      }
+    }             
+  },
+  "variables": {
+    "subnetRef": "[concat(subscription().id,'/resourceGroups/',parameters('VnetRgName'),'/providers/Microsoft.Network/virtualNetworks/', parameters('VnetName'),'/subnets/', parameters('subnetName'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[concat(parameters('virtualMachineNamePrefix'), copyIndex(1))]",
+      "apiVersion": "2020-06-01",
+      "location": "[parameters('location')]",
+      "copy": {
+        "name": "VMcopy",
+        "count": "[parameters('virtualMachineCount')]"
+      },
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('virtualMachineSize')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "MicrosoftWindowsServer",
+            "offer": "WindowsServer",
+            "sku": "[parameters('vmimageSKU')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "[concat(parameters('virtualMachineNamePrefix'),copyIndex(1), '-osdisk')]",
+            "createOption": "FromImage",
+            "managedDisk": {
+              "storageAccountType": "Premium_LRS"
+            },
+            "caching": "ReadWrite"
+          }
+        },
+        "osProfile": {
+          "computerName": "[concat(parameters('virtualMachineNamePrefix'), copyIndex(1))]",
+          "adminUsername": "[parameters('virtualMachineAdminUserName')]",
+          "windowsConfiguration": {
+            "provisionVMAgent": true
+          },
+          "adminPassword": "[parameters('virtualMachineAdminPassword')]"
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(parameters('virtualMachineNamePrefix'), copyIndex(1), '-nic'))]"
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces', concat(parameters('virtualMachineNamePrefix'), copyIndex(1), '-nic'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[concat(parameters('virtualMachineNamePrefix'), copyIndex(1), '-nic')]",
+      "apiVersion": "2020-05-01",
+      "location": "[parameters('location')]",
+      "copy": {
+        "name": "NICCopy",
+        "count": "[parameters('virtualMachineCount')]"
+      },
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[variables('subnetRef')]"
+              }
+            }
+          }
+        ],
+        "enableIPForwarding": false
+      },
+      "dependsOn": []
+    }
+  ],
+  "outputs": {}
+}

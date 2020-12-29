@@ -1,0 +1,75 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "appServiceName": {
+      "type": "string",
+      "defaultValue": "appplan-wu2-relo-qa-01",
+      "minLength": 1
+    },
+    "appServiceSkuName": {
+      "type": "string",
+      "defaultValue": "S1",
+      "metadata": {
+        "description": "Describes plan's pricing tier and capacity. Check details at https://azure.microsoft.com/en-us/pricing/details/app-service/"
+      }
+    },
+    "webAppName1": {
+      "type": "string",
+      "defaultValue": "webapp-wu2-relo-qa-01",
+      "minLength": 1
+    },
+        "webAppName2": {
+      "type": "string",
+      "defaultValue": "webapp-wu2-relo-qa-02",
+      "minLength": 1
+    },
+    "location": {
+        "type": "string",
+        "defaultValue": "westus2"
+    }
+  },
+  "resources": [
+    {
+      "name": "[parameters('appServiceName')]",
+      "type": "Microsoft.Web/serverfarms",
+      "location": "[parameters('location')]",
+      "apiVersion": "2015-08-01",
+      "sku": {
+        "name": "[parameters('appServiceSkuName')]"
+      },
+      "dependsOn": [ ],
+      "properties": {
+        "name": "[parameters('appServiceName')]",
+        "numberOfWorkers": 1
+      }
+    },
+    {
+      "name": "[parameters('webAppName1')]",
+      "type": "Microsoft.Web/sites",
+      "location": "[parameters('location')]",
+      "apiVersion": "2015-08-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', parameters('appServiceName'))]"
+      ],
+      "properties": {
+        "name": "[parameters('webAppName1')]",
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('appServiceName'))]"
+      }
+    },
+        {
+      "name": "[parameters('webAppName2')]",
+      "type": "Microsoft.Web/sites",
+      "location": "[parameters('location')]",
+      "apiVersion": "2015-08-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', parameters('appServiceName'))]"
+      ],
+      "properties": {
+        "name": "[parameters('webAppName2')]",
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('appServiceName'))]"
+      }
+    }
+  ],
+  "outputs": {}
+  }
