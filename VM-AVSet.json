@@ -1,0 +1,157 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "vmName": {
+      "type": "array",
+      "defaultValue": [
+        { "name": "blueprintVM01"},
+        { "name": "blueprintVM01"},
+        { "name": "" }
+      ], 
+      "metadata": {
+        "description": "Name for the Virtual Machine."
+      }
+    },
+    "vmCount": {
+      "type": "int",
+      "defaultValue": 2,
+      "metadata": {
+        "description": "Virtual Machine count."
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "defaultValue": "pashaadmin",
+      "metadata": {
+        "description": "User name for the Virtual Machine."
+      }
+    },
+    "adminPassword":{
+      "type": "securestring",
+      "defaultValue": "Pashaadmin@123",
+      "metadata": {
+        "description": "Virtual Machine Admin password"
+      }
+    },
+    "VMSize": {
+      "type": "string",
+      "defaultValue": "Standard_Ds1_v2",
+      "metadata": {
+        "description": "Virtual Machine size"
+        }
+      },
+    "VMimaeSKU": {
+      "type": "string",
+      "defaultValue": "2016-Datacenter",
+      "metadata": {
+        "description": "Virtual Machine size"
+        }
+      },      
+      "osDiskType":{
+        "type": "string",
+        "defaultValue": "Standard_LRS",
+        "allowedValues": [],
+        "metadata": {
+            "description": "Virtual Machine OS disk type"
+            }
+      },
+      "virtualNetworkResourceGroup":{
+        "type":"string",
+        "defaultValue": "",
+        "metadata": {
+          "description": "Virtual network resource group name"
+        }
+      },
+      "virtualNetworkName": {
+        "type": "String",
+        "defaultValue": "",
+        "allowedValues": [],
+        "metadata": {
+            "description": "Name of the existing virtual network"
+        }
+      },  
+      "subnetName": {
+        "type": "string",
+        "defaultvalue": "",
+        "allowedValues": [],
+        "metadata": {
+          "description": "Name of the existing subnet"
+        }
+      }
+  },
+  "variables": {
+      "subnetRef": "[resourceId(parameters('virtualNetworkResourceGroup'), 'Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'),  parameters('subnetName'))]"
+    },
+  "resources": [
+    {
+      "apiVersion": "2018-11-01",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[concat(parameters('vmName')[copyIndex()].name,'-nic')]",
+      "location": "[resourceGroup().location]",
+      "copy": {
+        "name": "NicLoop",
+        "count": "[parameters('vmCount')]"
+      },
+      "dependsOn": [],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[variables('subnetRef')]"
+              }   
+            }
+          }  
+        ]
+      }
+    },
+    {
+      "apiVersion": "2018-10-01",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[parameters('vmName')[copyIndex()].name]",
+      "location": "[resourceGroup().location]",
+      "copy": {
+        "name": "vmLoop",
+        "count": "[parameters('vmCount')]"
+      },
+      "tags": {},
+     "dependsOn": ["NicLoop"],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[parameters('vmName')[copyIndex()].name]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+            "imageReference": {
+                "publisher": "MicrosoftWindowsServer",
+                "offer": "WindowsServer",
+                "sku": "[parameters('VMimaeSKU')]",
+                "version": "latest"
+            },
+          "osDisk": {
+            "name": "[concat(parameters('vmName')[copyIndex()].name, '-OsDisk')]",
+            "caching": "ReadWrite",
+            "createOption": "FromImage",
+            "managedDisk":{
+              "storageAccountType":"[parameters('osDiskType')]"
+            }
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(parameters('vmName')[copyIndex()].name, '-NIC'))]"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

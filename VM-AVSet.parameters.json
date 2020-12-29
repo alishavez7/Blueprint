@@ -1,0 +1,43 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "vmName": {
+            "value": [
+                {
+                    "name": "armtestvm01"
+                },
+                {
+                    "name": ""
+                },
+                {
+                    "name": ""
+                }
+            ]
+        },
+        "vmCount": {
+            "value": 2
+        },
+        "adminUsername": {
+            "value": "axaltaadmin"
+        },
+        "adminPassword": {
+            "value": "Axaltaadmin@123"
+        },
+        "VMSize": {
+            "value": "Standard_Ds1_v2"
+        },
+        "osDiskType": {
+            "value": "Standard_LRS"
+        },
+        "virtualNetworkResourceGroup": {
+            "value": "testrg1"
+        },
+        "virtualNetworkName": {
+            "value": "vnet-wu2-relo-dev"
+        },
+        "subnetName": {
+            "value": "snet-wu2-relo-app"
+        }
+    }
+}
